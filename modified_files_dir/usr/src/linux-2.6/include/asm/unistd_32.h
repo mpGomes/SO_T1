@@ -330,6 +330,7 @@
 #define __NR_timerfd		322
 #define __NR_eventfd		323
 #define __NR_fallocate		324
+#define __NR_myservice		325
 
 #ifdef __KERNEL__
 
