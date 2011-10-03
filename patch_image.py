@@ -13,9 +13,14 @@ import shutil
 import subprocess
 import time
 
+def mkdir_if_needed(path):
+    if not os.path.isdir(path):
+        os.makedirs(path)
+
 def copy_to_image(path):
     src_path= os.path.join(FILES_DIR, path)
     dst_path= os.path.join(MNT_DIR, path)
+    mkdir_if_needed( os.path.dirname(dst_path) )
     print path
     shutil.copy2(src_path, dst_path)
 
