@@ -1,7 +1,0 @@
-/usr/src/linux-2.6/arch/x86/kernel/syscall_table_32.S
-/usr/src/linux-2.6/include/linux/syscalls.h
-/usr/src/linux-2.6/kernel/myservice.c
-/usr/src/linux-2.6/include/asm/unistd_32.h
-/usr/include/asm/unistd_32.h
-/usr/include/sys/myservice.h
-/t1.c
