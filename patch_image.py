@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2.7
 
 IMAGE_FILE="linux-SO.img"
 OFFSET="32256"
