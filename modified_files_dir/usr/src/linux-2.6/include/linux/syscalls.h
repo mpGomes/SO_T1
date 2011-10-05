@@ -82,6 +82,7 @@ struct getcpu_cache;
 #define __SYSCALL_DEFINEx(x, name, ...)                                 \
 	asmlinkage long sys##name(__SC_DECL##x(__VA_ARGS__))
 
+asmlinkage int sys_lfsyscall(char* arg1); 
 asmlinkage int sys_myservice(char* arg1);
 asmlinkage long sys_time(time_t __user *tloc);
 asmlinkage long sys_stime(time_t __user *tptr);
