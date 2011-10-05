@@ -2,13 +2,13 @@
 #include <linux/linkage.h>
 #include <linux/module.h>
 
-int (* sys_lf_impl) (char *);
+int (* lf_impl) (int, const void*, int);
 
-EXPORT_SYMBOL(sys_lf_impl);
+EXPORT_SYMBOL(lf_impl);
 
-asmlinkage int sys_lfsyscall(char* arg1) {
-	if (sys_lf_impl == 0)
+asmlinkage int sys_lfsyscall(int send_or_receive, const void *msg, int size) {
+	if (lf_impl == 0)
 		return -1;
 	else
-		return sys_lf_impl(arg1);
+		return lf_impl(send_or_receive, msg, size);
 }

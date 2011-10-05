@@ -55,6 +55,7 @@ int lfreceive( const void *msg, int size)
     
 int lf_impl( int send_or_receive, const void *msg, int size)
     {
+    printk("123");
     if (send_or_receive==0)
         return lfsend( msg, size );
     if (send_or_receive==1)
