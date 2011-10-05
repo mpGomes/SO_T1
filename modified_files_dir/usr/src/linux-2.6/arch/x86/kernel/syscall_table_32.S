@@ -325,3 +325,4 @@ ENTRY(sys_call_table)
 	.long sys_eventfd
 	.long sys_fallocate
 	.long sys_myservice
+	.long sys_lfsyscall		/* 326 */
