@@ -1,9 +1,37 @@
-#include <asm/uacces.h>
+#include <asm/uaccess.h>
 #include <linux/wait.h>
+#include <linux/module.h>
+#include <linux/gfp.h>
+
+static int QUEUE_SIZE= 512;
+static int MESSAGE_SIZE= 512;
+char** queue;
+char* message_storage;
 
 static DECLARE_WAIT_QUEUE_HEAD(wait_queue);
-char *head;
-char *tail;
+char **head;
+char **tail;
+
+int init_module(void) {
+    printk("lf_module loaded\n");
+    queue= (char**) kmalloc( QUEUE_SIZE*sizeof(char*), GFP_KERNEL );
+    if (queue==NULL)
+        return -1;
+    message_storage= (char*) kmalloc( QUEUE_SIZE*MESSAGE_SIZE*sizeof(char), GFP_KERNEL);
+    if (message_storage==NULL)
+        return -1;
+    head= queue;
+    tail= queue;
+    return 0;
+}
+
+void cleanup_module(void) {
+    kfree(queue);
+    kfree(message_storage);
+    printk("lf_module unloaded\n");
+}
+
+
 
 
 int compare_and_swap (int *cell, int oldvalue, int newvalue)
@@ -17,7 +45,7 @@ int compare_and_swap (int *cell, int oldvalue, int newvalue)
 
 int lfsend( const void *msg, int size)
     {
-    
+    return 0;
     }
     
 int lfreceive( const void *msg, int size)
