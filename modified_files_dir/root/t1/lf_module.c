@@ -8,8 +8,23 @@ int lf_impl_internal(int, const void* , int);
 
 static int QUEUE_SIZE= 512;
 static int MESSAGE_SIZE= 512;
-char** queue;
-char* message_storage;
+
+typedef struct {
+		char msg[MESSAGE_SIZE];
+		int size;
+		int read_offset;
+		} msg_obj;
+
+typedef struct {
+		msg_obj* queue[QUEUE_SIZE];
+		msg_obj message_storage[QUEUE_SIZE];
+		int head, tail;
+		} queue_obj;
+
+msg_obj* queue[QUEUE_SIZE];
+msg_obj message_storage[QUEUE_SIZE];
+
+queue_obj queue;
 
 static DECLARE_WAIT_QUEUE_HEAD(wait_queue);
 char **head;
@@ -17,14 +32,9 @@ char **tail;
 
 int init_module(void) {
     printk("lf_module loaded\n");
-    queue= (char**) kmalloc( QUEUE_SIZE*sizeof(char*), GFP_KERNEL );
-    if (queue==NULL)
-        return -1;
-    message_storage= (char*) kmalloc( QUEUE_SIZE*MESSAGE_SIZE*sizeof(char), GFP_KERNEL);
-    if (message_storage==NULL)
-        return -1;
-    head= queue;
-    tail= queue;
+    queue = kmalloc (sizeof(queue_obj), GFP_KERNEL)*;
+    head= 0;
+    tail= 0;
     lf_impl= lf_impl_internal;
     return 0;
 }
