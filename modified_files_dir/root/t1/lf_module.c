@@ -3,6 +3,9 @@
 #include <linux/module.h>
 #include <linux/gfp.h>
 
+extern int (*lf_impl)(int, const void* , int);
+int lf_impl_internal(int, const void* , int);
+
 static int QUEUE_SIZE= 512;
 static int MESSAGE_SIZE= 512;
 char** queue;
@@ -22,6 +25,7 @@ int init_module(void) {
         return -1;
     head= queue;
     tail= queue;
+    lf_impl= lf_impl_internal;
     return 0;
 }
 
@@ -53,7 +57,7 @@ int lfreceive( const void *msg, int size)
     return 0;
     } 
     
-int lf_impl( int send_or_receive, const void *msg, int size)
+int lf_impl_internal( int send_or_receive, const void *msg, int size)
     {
     printk("123");
     if (send_or_receive==0)
