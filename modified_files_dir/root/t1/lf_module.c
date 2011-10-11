@@ -6,8 +6,8 @@
 extern int (*lf_impl)(int, const void* , int);
 int lf_impl_internal(int, const void* , int);
 
-static int QUEUE_SIZE= 512;
-static int MESSAGE_SIZE= 512;
+#define QUEUE_SIZE 512
+#define MESSAGE_SIZE 512
 
 typedef struct {
 		char msg[MESSAGE_SIZE];
