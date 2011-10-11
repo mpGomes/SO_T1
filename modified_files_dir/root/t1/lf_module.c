@@ -17,7 +17,6 @@ typedef struct {
 
 typedef struct {
 		msg_obj* queue[QUEUE_SIZE];
-		msg_obj message_storage[QUEUE_SIZE];
 		int head, tail;
 		} queue_obj;
 
