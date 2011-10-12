@@ -21,6 +21,7 @@ typedef struct {
 		} queue_obj;
 
 queue_obj global_queue;
+
 static DECLARE_WAIT_QUEUE_HEAD(wait_queue);
 
 int init_module(void) {
@@ -32,9 +33,6 @@ int init_module(void) {
 void cleanup_module(void) {
     printk("lf_module unloaded\n");
 }
-
-
-
 
 int compare_and_swap (int *cell, int oldvalue, int newvalue)
     {
@@ -49,12 +47,41 @@ int lfsend( const void *msg, int size)
     {
     return 0;
     }
-    
-int lfreceive( const void *msg, int size)
-    {
-    return 0;
+
+int lfreceive(queue_obj* q, void *msg, int size)
+{
+		int front, size_to_read, offset, left;	/* index of the front of the queue */
+		msg_obj* x;
+		while(1) {
+			front = q->head;
+			x = q->queue[front % QUEUE_SIZE];
+			
+			if (front != q->head)
+				continue;
+			if (front == q->tail)
+				continue;
+			if (x != 0){
+				offset = x->read_offset;
+				left = x->size - offset;
+				size_to_read =  (size > left ) ? left : size;
+				if (size_to_read < size) {	/* there is still message left */
+					if (compare_and_swap((int*)&(q->queue[front % QUEUE_SIZE]),(int)x,(int)x)) 
+						if(compare_and_swap(&(x->read_offset), offset, offset+size_to_read)) {
+							copy_to_user(msg,&x->msg[offset], size_to_read);
+							return	size_to_read;
+					}
+				}
+				else if (compare_and_swap((int*)&(q->queue[front % QUEUE_SIZE]),(int)x,0)) {
+					compare_and_swap((int*)&(q->head), (int)front, front+1);
+					copy_to_user(msg,&x->msg[offset], size_to_read);
+					return	size_to_read;
+					}
+				}
+			else
+				compare_and_swap((int*)&(q->head),(int)front,front+1);
+		}
     } 
-    
+ 
 int lf_impl_internal( int send_or_receive, const void *msg, int size)
     {
     printk("123");
