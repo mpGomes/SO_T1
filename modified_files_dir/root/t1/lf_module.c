@@ -131,7 +131,6 @@ int lfreceive(queue_obj* q, const void *msg, int size)
  
 int lf_impl_internal( int send_or_receive, const void *msg, int size)
     {
-    printk("123");
     if (send_or_receive==0)
         return lfsend( &global_queue, msg, size );
     if (send_or_receive==1)
