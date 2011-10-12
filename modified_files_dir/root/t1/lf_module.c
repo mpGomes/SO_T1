@@ -44,7 +44,7 @@ int compare_and_swap (int *cell, int oldvalue, int newvalue)
     }
 
 int lfsend(queue_obj* q, const void *msg, int size)
-    {
+{
     int rear;
     msg_obj* x;
     msg_obj* new_message= (msg_obj*) kmalloc( sizeof(msg_obj), GFP_KERNEL);
@@ -84,41 +84,41 @@ int lfsend(queue_obj* q, const void *msg, int size)
             }
         }
     return -123;
-    }
+}
 
-int lfreceive(queue_obj* q, void *msg, int size)
+int lfreceive(queue_obj* q, const void *msg, int size)
 {
-		int front, size_to_read, offset, left;	/* index of the front of the queue */
-		msg_obj* x;
-		while(1) {
-			front = q->head;
-			x = q->queue[front % QUEUE_SIZE];
-			
-			if (front != q->head)
-				continue;
-			if (front == q->tail)
-				continue;
-			if (x != 0){
-				offset = x->read_offset;
-				left = x->size - offset;
-				size_to_read =  (size > left ) ? left : size;
-				if (size_to_read < size) {	/* there is still message left */
-					if (compare_and_swap((int*)&(q->queue[front % QUEUE_SIZE]),(int)x,(int)x)) 
-						if(compare_and_swap(&(x->read_offset), offset, offset+size_to_read)) {
-							copy_to_user(msg,&x->msg[offset], size_to_read);
-							return	size_to_read;
-					}
+	int front, size_to_read, offset, left;	/* index of the front of the queue */
+	msg_obj* x;
+	while(1) {
+		front = q->head;
+		x = q->queue[front % QUEUE_SIZE];
+		
+		if (front != q->head)
+			continue;
+		if (front == q->tail)
+			continue;
+		if (x != 0){
+			offset = x->read_offset;
+			left = x->size - offset;
+			size_to_read =  (size > left ) ? left : size;
+			if (size_to_read < size) {	/* there is still message left */
+				if (compare_and_swap((int*)&(q->queue[front % QUEUE_SIZE]),(int)x,(int)x)) 
+					if(compare_and_swap(&(x->read_offset), offset, offset+size_to_read)) {
+						copy_to_user(msg,&x->msg[offset], size_to_read);
+						return	size_to_read;
 				}
-				else if (compare_and_swap((int*)&(q->queue[front % QUEUE_SIZE]),(int)x,0)) {
-					compare_and_swap((int*)&(q->head), (int)front, front+1);
-					copy_to_user(msg,&x->msg[offset], size_to_read);
-					return	size_to_read;
-					}
+			}
+			else if (compare_and_swap((int*)&(q->queue[front % QUEUE_SIZE]),(int)x,0)) {
+				compare_and_swap((int*)&(q->head), (int)front, front+1);
+				copy_to_user(msg,&x->msg[offset], size_to_read);
+				return	size_to_read;
 				}
-			else
-				compare_and_swap((int*)&(q->head),(int)front,front+1);
-		}
-    } 
+			}
+		else
+			compare_and_swap((int*)&(q->head),(int)front,front+1);
+	}
+} 
  
 int lf_impl_internal( int send_or_receive, const void *msg, int size)
     {
@@ -126,7 +126,7 @@ int lf_impl_internal( int send_or_receive, const void *msg, int size)
     if (send_or_receive==0)
         return lfsend( &global_queue, msg, size );
     if (send_or_receive==1)
-        return lfreceive( msg, size );
+        return lfreceive( &global_queue, msg, size );
     return -1;
     }
             
