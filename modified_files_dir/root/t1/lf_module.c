@@ -21,6 +21,7 @@ typedef struct {
 		} queue_obj;
 
 queue_obj global_queue;
+
 static DECLARE_WAIT_QUEUE_HEAD(wait_queue);
 
 int init_module(void) {
@@ -33,9 +34,6 @@ void cleanup_module(void) {
     printk("lf_module unloaded\n");
 }
 
-
-
-
 int compare_and_swap (int *cell, int oldvalue, int newvalue)
     {
     char result;
@@ -45,23 +43,90 @@ int compare_and_swap (int *cell, int oldvalue, int newvalue)
     return result;
     }
 
-int lfsend( const void *msg, int size)
-    {
-    return 0;
-    }
+int lfsend(queue_obj* q, const void *msg, int size)
+{
+    int rear;
+    msg_obj* x;
+    msg_obj* new_message= (msg_obj*) kmalloc( sizeof(msg_obj), GFP_KERNEL);
+    printk("LFSEND: enqueuing '%s', size %i", (char*)msg, size);
     
-int lfreceive( const void *msg, int size)
-    {
-    return 0;
-    } 
-    
+    new_message->size= size;
+    copy_from_user( &(new_message->msg), msg, size);
+    while (1)
+        {
+        rear= q->tail;
+        x= q->queue[rear % QUEUE_SIZE];
+        if (rear != q->tail)
+            {
+            continue;
+            printk("LFSEND: inconsistent state, retrying");
+            }
+        if (rear == q->head + QUEUE_SIZE)
+            {
+            continue;
+            printk("LFSEND: queue full, retrying");
+            }
+
+        if (x == NULL)
+            {
+            if ( compare_and_swap( (int*) &(q->queue[rear % QUEUE_SIZE]), (int) NULL, (int) new_message) )
+                {
+                compare_and_swap( (int*) &(q->tail), (int) rear, (int) rear+1);
+                printk("LFSEND: enqueue succeeded");
+                return 0;
+                }
+            }
+        else
+            {
+            printk("LFSEND: concurrent enqueue detected, incrementing rear and retrying");
+            compare_and_swap( (int*) (&q->tail), rear, rear+1);
+            continue;
+            }
+        }
+    return -123;
+}
+
+int lfreceive(queue_obj* q, const void *msg, int size)
+{
+	int front, size_to_read, offset, left;	/* index of the front of the queue */
+	msg_obj* x;
+	while(1) {
+		front = q->head;
+		x = q->queue[front % QUEUE_SIZE];
+		
+		if (front != q->head)
+			continue;
+		if (front == q->tail)
+			continue;
+		if (x != 0){
+			offset = x->read_offset;
+			left = x->size - offset;
+			size_to_read =  (size > left ) ? left : size;
+			if (size_to_read < size) {	/* there is still message left */
+				if (compare_and_swap((int*)&(q->queue[front % QUEUE_SIZE]),(int)x,(int)x)) 
+					if(compare_and_swap(&(x->read_offset), offset, offset+size_to_read)) {
+						copy_to_user(msg,&x->msg[offset], size_to_read);
+						return	size_to_read;
+				}
+			}
+			else if (compare_and_swap((int*)&(q->queue[front % QUEUE_SIZE]),(int)x,0)) {
+				compare_and_swap((int*)&(q->head), (int)front, front+1);
+				copy_to_user(msg,&x->msg[offset], size_to_read);
+				return	size_to_read;
+				}
+			}
+		else
+			compare_and_swap((int*)&(q->head),(int)front,front+1);
+	}
+} 
+ 
 int lf_impl_internal( int send_or_receive, const void *msg, int size)
     {
     printk("123");
     if (send_or_receive==0)
-        return lfsend( msg, size );
+        return lfsend( &global_queue, msg, size );
     if (send_or_receive==1)
-        return lfsend( msg, size );
+        return lfreceive( &global_queue, msg, size );
     return -1;
     }
             
