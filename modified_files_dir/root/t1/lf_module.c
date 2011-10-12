@@ -51,7 +51,7 @@ int lfsend(queue_obj* q, const void *msg, int size)
     printk("LFSEND: enqueuing '%s', size %i", (char*)msg, size);
     
     new_message->size= size;
-    copy_from_user( &(new_message->msg), msg, size);
+    copy_from_user( new_message->msg, msg, size);
     while (1)
         {
         rear= q->tail;
@@ -94,10 +94,14 @@ int lfreceive(queue_obj* q, const void *msg, int size)
 		front = q->head;
 		x = q->queue[front % QUEUE_SIZE];
 		
-		if (front != q->head)
+		if (front != q->head){
+			printk("LFRECIEVE: Concurrent access\n");
 			continue;
-		if (front == q->tail)
+		}
+		if (front == q->tail){
+			printk("LFRECIEVE: Empty queue\n");
 			continue;
+		}
 		if (x != 0){
 			offset = x->read_offset;
 			left = x->size - offset;
@@ -105,18 +109,22 @@ int lfreceive(queue_obj* q, const void *msg, int size)
 			if (size_to_read < size) {	/* there is still message left */
 				if (compare_and_swap((int*)&(q->queue[front % QUEUE_SIZE]),(int)x,(int)x)) 
 					if(compare_and_swap(&(x->read_offset), offset, offset+size_to_read)) {
-						copy_to_user(msg,&x->msg[offset], size_to_read);
+						copy_to_user(msg,&(x->msg[offset]), size_to_read);
+						printk("LFRRECIEVE:Message copied, size read : %d\n", size_to_read);
 						return	size_to_read;
 				}
 			}
 			else if (compare_and_swap((int*)&(q->queue[front % QUEUE_SIZE]),(int)x,0)) {
 				compare_and_swap((int*)&(q->head), (int)front, front+1);
-				copy_to_user(msg,&x->msg[offset], size_to_read);
+				copy_to_user(msg,&(x->msg[offset]), size_to_read);
+				printk("LFRECIEVE:Message read completely\n");
 				return	size_to_read;
 				}
 			}
-		else
+		else {
+			printk("LFRECIEVE: Concurrent access - update front");
 			compare_and_swap((int*)&(q->head),(int)front,front+1);
+		}
 	}
 } 
  
