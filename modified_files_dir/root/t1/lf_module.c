@@ -115,7 +115,7 @@ int lfreceive(queue_obj* q, const void *msg, int size)
 			if (size_to_read < size) {	/* there is still message left */
 				if (compare_and_swap((int*)&(q->queue[front % QUEUE_SIZE]),(int)x,(int)x)) 
 					if(compare_and_swap(&(x->read_offset), offset, offset+size_to_read)) {
-						copy_to_user(msg,&(x->msg[offset]), size_to_read);
+						copy_to_user(msg, (void*) &(x->msg[offset]), size_to_read);
 						printk("LFRRECIEVE:Message copied, size read : %d\n", size_to_read);
                         wake_up( &write_wait_queue );
 						return	size_to_read;
@@ -123,7 +123,7 @@ int lfreceive(queue_obj* q, const void *msg, int size)
 			}
 			else if (compare_and_swap((int*)&(q->queue[front % QUEUE_SIZE]),(int)x,0)) {
 				compare_and_swap((int*)&(q->head), (int)front, front+1);
-				copy_to_user(msg,&(x->msg[offset]), size_to_read);
+				copy_to_user(msg, (void*) &(x->msg[offset]), size_to_read);
 				printk("LFRECIEVE:Message read completely\n");
 				return	size_to_read;
 				}
