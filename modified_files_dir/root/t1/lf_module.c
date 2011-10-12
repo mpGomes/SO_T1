@@ -112,7 +112,7 @@ int lfreceive(queue_obj* q, const void *msg, int size)
 			offset = x->read_offset;
 			left = x->size - offset;
 			size_to_read =  (size > left ) ? left : size;
-			if (size_to_read < size) {	/* there is still message left */
+			if (size_to_read < left) {	/* there is still message left */
 				if (compare_and_swap((int*)&(q->queue[front % QUEUE_SIZE]),(int)x,(int)x)) 
 					if(compare_and_swap(&(x->read_offset), offset, offset+size_to_read)) {
 						copy_to_user(msg, (void*) &(x->msg[offset]), size_to_read);
