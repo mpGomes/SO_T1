@@ -71,9 +71,9 @@ int lfsend(queue_obj* q, const void *msg, int size)
 
         if (x == NULL)
             {
-            if ( compare_and_swap( (int*) q->queue[rear % QUEUE_SIZE], (int) NULL, (int) new_message) )
+            if ( compare_and_swap( (int*) &(q->queue[rear % QUEUE_SIZE]), (int) NULL, (int) new_message) )
                 {
-                compare_and_swap( (int*) q->tail, (int) rear, (int) rear+1);
+                compare_and_swap( (int*) &(q->tail), (int) rear, (int) rear+1);
                 printk("LFSEND: enqueue succeeded");
                 return 0;
                 }
@@ -81,7 +81,7 @@ int lfsend(queue_obj* q, const void *msg, int size)
         else
             {
             printk("LFSEND: concurrent enqueue detected, incrementing rear and retrying");
-            compare_and_swap( (int*) q->tail, rear, rear+1);
+            compare_and_swap( (int*) (&q->tail), rear, rear+1);
             continue;
             }
         }
