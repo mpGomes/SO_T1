@@ -2,6 +2,7 @@
 #include <linux/wait.h>
 #include <linux/module.h>
 #include <linux/gfp.h>
+#include <linux/sched.h>
 #include <asm-x86/cmpxchg_32.h>
 
 extern int (*lf_impl)(int, const void* , int);
@@ -23,7 +24,8 @@ typedef struct {
 
 queue_obj global_queue;
 
-static DECLARE_WAIT_QUEUE_HEAD(wait_queue);
+static DECLARE_WAIT_QUEUE_HEAD(write_wait_queue);
+static DECLARE_WAIT_QUEUE_HEAD(read_wait_queue);
 
 int init_module(void) {
     printk("lf_module loaded\n");
@@ -64,8 +66,9 @@ int lfsend(queue_obj* q, const void *msg, int size)
             }
         if (rear == q->head + QUEUE_SIZE)
             {
+            printk("LFSEND: queue full, sleeping");
+            wait_event( write_wait_queue, rear!=q->head + QUEUE_SIZE );
             continue;
-            printk("LFSEND: queue full, retrying");
             }
 
         if (x == NULL)
@@ -73,6 +76,7 @@ int lfsend(queue_obj* q, const void *msg, int size)
             if ( compare_and_swap( (int*) &(q->queue[rear % QUEUE_SIZE]), (int) NULL, (int) new_message) )
                 {
                 compare_and_swap( (int*) &(q->tail), (int) rear, (int) rear+1);
+                wake_up( &read_wait_queue );
                 printk("LFSEND: enqueue succeeded");
                 return 0;
                 }
@@ -100,7 +104,8 @@ int lfreceive(queue_obj* q, const void *msg, int size)
 			continue;
 		}
 		if (front == q->tail){
-			printk("LFRECIEVE: Empty queue\n");
+			printk("LFRECIEVE: Empty queue. sleeping\n");
+            wait_event( read_wait_queue, front!=q->tail );
 			continue;
 		}
 		if (x != 0){
@@ -112,6 +117,7 @@ int lfreceive(queue_obj* q, const void *msg, int size)
 					if(compare_and_swap(&(x->read_offset), offset, offset+size_to_read)) {
 						copy_to_user(msg,&(x->msg[offset]), size_to_read);
 						printk("LFRRECIEVE:Message copied, size read : %d\n", size_to_read);
+                        wake_up( &write_wait_queue );
 						return	size_to_read;
 				}
 			}
