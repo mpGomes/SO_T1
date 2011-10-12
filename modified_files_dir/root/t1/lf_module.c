@@ -51,7 +51,7 @@ int lfsend(queue_obj* q, const void *msg, int size)
     int rear;
     msg_obj* x;
     msg_obj* new_message= (msg_obj*) kmalloc( sizeof(msg_obj), GFP_KERNEL);
-    printk("LFSEND: enqueuing '%s', size %i", (char*)msg, size);
+    printk("LFSEND: enqueuing '%s', size %i \n", (char*)msg, size);
     
     new_message->size= size;
     copy_from_user( new_message->msg, msg, size);
@@ -62,11 +62,11 @@ int lfsend(queue_obj* q, const void *msg, int size)
         if (rear != q->tail)
             {
             continue;
-            printk("LFSEND: inconsistent state, retrying");
+            printk("LFSEND: inconsistent state, retrying \n");
             }
         if (rear == q->head + QUEUE_SIZE)
             {
-            printk("LFSEND: queue full, sleeping");
+            printk("LFSEND: queue full, sleeping \n");
             wait_event( write_wait_queue, rear!=q->head + QUEUE_SIZE );
             continue;
             }
@@ -77,13 +77,13 @@ int lfsend(queue_obj* q, const void *msg, int size)
                 {
                 compare_and_swap( (int*) &(q->tail), (int) rear, (int) rear+1);
                 wake_up( &read_wait_queue );
-                printk("LFSEND: enqueue succeeded");
+                printk("LFSEND: enqueue succeeded \n");
                 return 0;
                 }
             }
         else
             {
-            printk("LFSEND: concurrent enqueue detected, incrementing rear and retrying");
+            printk("LFSEND: concurrent enqueue detected, incrementing rear and retrying \n");
             compare_and_swap( (int*) (&q->tail), rear, rear+1);
             continue;
             }
@@ -129,7 +129,7 @@ int lfreceive(queue_obj* q, const void *msg, int size)
 				}
 			}
 		else {
-			printk("LFRECIEVE: Concurrent access - update front");
+			printk("LFRECIEVE: Concurrent access - update front \n");
 			compare_and_swap((int*)&(q->head),(int)front,front+1);
 		}
 	}
