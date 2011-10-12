@@ -2,6 +2,7 @@
 #include <linux/wait.h>
 #include <linux/module.h>
 #include <linux/gfp.h>
+#include <asm-x86/cmpxchg_32.h>
 
 extern int (*lf_impl)(int, const void* , int);
 int lf_impl_internal(int, const void* , int);
@@ -36,11 +37,11 @@ void cleanup_module(void) {
 
 int compare_and_swap (int *cell, int oldvalue, int newvalue)
     {
-    char result;
-    asm ("lock cmpxchg %2, (%1) ; setz %0"
-    : "=r" (result)
-    : "r"(cell), "r"(newvalue), "a"(oldvalue));
-    return result;
+    unsigned long result= cmpxchg( cell, (unsigned long) oldvalue, (unsigned long) newvalue);
+    if (result==oldvalue)
+        return 1;
+    else
+        return 0;
     }
 
 int lfsend(queue_obj* q, const void *msg, int size)
