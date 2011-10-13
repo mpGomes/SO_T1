@@ -1,0 +1,4 @@
+A directoria "modified_files_dir" contém os ficheiros modificados (dentro da imagem) no âmbito do trabalho prático.
+O script "patch_image.py" pode ser usado para copiar estes ficheiros para dentro de uma imagem 'vanilla'.
+O source e testes da lock-less queue em si encontram-se em root/t1
+ 
